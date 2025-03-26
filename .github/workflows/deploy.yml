@@ -1,83 +1,83 @@
-name: Deploy Multiple AWS Lambda Functions
+# name: Deploy Multiple AWS Lambda Functions
 
-on: [push]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install Dependencies and Package Functions
-        run: |
-          for func in function1 function2 function3; do
-            # Install dependencies if requirements.txt exists
-            if [ -f lambda/${func}/requirements.txt ]; then
-              pip install -r lambda/${func}/requirements.txt -t lambda/${func}/
-            fi
-            # Package the Lambda function
-            (cd lambda/${func} && zip -r ../../${func}.zip .)
-          done
-
-      - name: Deploy to AWS Lambda
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1  # Adjust to your AWS region
-          LAMBDA_ROLE_ARN: arn:aws:iam::559050253399:role/Lambda_role  # Replace with your IAM role ARN
-        run: |
-          for func in function1 function2 function3; do
-            # Check if the Lambda function exists
-            if aws lambda get-function --function-name ${func} > /dev/null 2>&1; then
-              echo "Updating existing function ${func}"
-              aws lambda update-function-code --function-name ${func} --zip-file fileb://${func}.zip
-            else
-              echo "Creating new function ${func}"
-              aws lambda create-function \
-                --function-name ${func} \
-                --runtime python3.9 \
-                --role $LAMBDA_ROLE_ARN \
-                --handler lambda_function.lambda_handler \
-                --zip-file fileb://${func}.zip
-            fi
-          done
-
-
-# name: Delete Multiple AWS Lambda Functions
-
-# on:
-#   workflow_dispatch:  # Allows manual triggering of the workflow
+# on: [push]
 
 # jobs:
-#   delete:
+#   deploy:
 #     runs-on: ubuntu-latest
 #     steps:
 #       - name: Checkout Repository
 #         uses: actions/checkout@v4
 
-#       - name: Set up AWS CLI
-#         run: |
-#           sudo apt-get update
-#           sudo apt-get install -y awscli
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.9'
 
-#       - name: Delete Lambda Functions
+#       - name: Install Dependencies and Package Functions
+#         run: |
+#           for func in function1 function2 function3; do
+#             # Install dependencies if requirements.txt exists
+#             if [ -f lambda/${func}/requirements.txt ]; then
+#               pip install -r lambda/${func}/requirements.txt -t lambda/${func}/
+#             fi
+#             # Package the Lambda function
+#             (cd lambda/${func} && zip -r ../../${func}.zip .)
+#           done
+
+#       - name: Deploy to AWS Lambda
 #         env:
 #           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
 #           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 #           AWS_REGION: us-east-1  # Adjust to your AWS region
+#           LAMBDA_ROLE_ARN: arn:aws:iam::559050253399:role/Lambda_role  # Replace with your IAM role ARN
 #         run: |
-#           functions=("function1" "function2" "function3")  # List your function names here
-#           for func in "${functions[@]}"; do
-#             if aws lambda get-function --function-name "$func" > /dev/null 2>&1; then
-#               echo "Deleting function $func"
-#               aws lambda delete-function --function-name "$func"
+#           for func in function1 function2 function3; do
+#             # Check if the Lambda function exists
+#             if aws lambda get-function --function-name ${func} > /dev/null 2>&1; then
+#               echo "Updating existing function ${func}"
+#               aws lambda update-function-code --function-name ${func} --zip-file fileb://${func}.zip
 #             else
-#               echo "Function $func does not exist"
+#               echo "Creating new function ${func}"
+#               aws lambda create-function \
+#                 --function-name ${func} \
+#                 --runtime python3.9 \
+#                 --role $LAMBDA_ROLE_ARN \
+#                 --handler lambda_function.lambda_handler \
+#                 --zip-file fileb://${func}.zip
 #             fi
 #           done
+
+
+name: Delete Multiple AWS Lambda Functions
+
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Delete Lambda Functions
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1  # Adjust to your AWS region
+        run: |
+          functions=("function1" "function2" "function3")  # List your function names here
+          for func in "${functions[@]}"; do
+            if aws lambda get-function --function-name "$func" > /dev/null 2>&1; then
+              echo "Deleting function $func"
+              aws lambda delete-function --function-name "$func"
+            else
+              echo "Function $func does not exist"
+            fi
+          done
