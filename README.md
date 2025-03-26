@@ -1,1 +1,1 @@
-# AWS Lambda Functions
+# AWS Lambda Functions deploying on AWS
